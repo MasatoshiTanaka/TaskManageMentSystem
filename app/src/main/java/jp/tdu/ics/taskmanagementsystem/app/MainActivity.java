@@ -11,15 +11,17 @@ import android.widget.ListView;
 
 public class MainActivity extends ActionBarActivity {
     private String taskText;
+    private String placeText;
     private ListView taskList;
     private ArrayAdapter<String> taskListAdapter;
-    private EditText editText;
+    private EditText taskEditText;
+    private EditText placeEditText;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Button addButton = (Button)findViewById(R.id.button);
+        Button addButton = (Button)findViewById(R.id.addButton);
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -27,16 +29,31 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
-        editText = (EditText)findViewById(R.id.editText);
+        taskEditText = (EditText)findViewById(R.id.taskEditText);
+        placeEditText = (EditText)findViewById(R.id.placeEditText);
 
-        taskListAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-        taskList = (ListView)findViewById(R.id.listView);
+        taskListAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1);
+        taskList = (ListView)findViewById(R.id.taskListView);
     }
 
     protected void addButtonAction(){
-        taskText = editText.getText().toString();
-        taskListAdapter.add(taskText);
-        taskList.setAdapter(taskListAdapter);
-        editText.getText().clear();
+        taskText = taskEditText.getText().toString();
+        placeText = placeEditText.getText().toString();
+        taskListAdapter.add("タスク名: " + taskText + "\n" + "場所名: " + placeText);
+
+        if(!(nullJudge(taskText) && nullJudge(placeText))){
+            taskList.setAdapter(taskListAdapter);
+        }
+
+        taskEditText.getText().clear();
+        placeEditText.getText().clear();
+    }
+
+    protected boolean nullJudge(String str){
+        if(str == null || str.length() == 0){
+            return true;
+        }else{
+            return  false;
+        }
     }
 }
