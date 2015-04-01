@@ -8,7 +8,7 @@
             android:orientation="horizontal"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content">
-        <EditText android:layout_width="241dp"
+        <EditText android:layout_width="320dp"
                   android:layout_height="wrap_content"
                   android:id="@+id/taskEditText"
                   android:hint="タスクを入力してください"
@@ -16,11 +16,10 @@
                   android:layout_alignTop="@+id/button2"
                 />
         <Spinner
-                android:background=""
                 android:id="@+id/placeSpinner"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
-            android:hint = "場所名を選択してください"
+                android:hint = "場所名を選択してください"
         </Spinner>
     </LinearLayout>
     <Button android:layout_width="395dp"
