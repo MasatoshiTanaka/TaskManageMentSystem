@@ -16,7 +16,6 @@
                   android:layout_alignTop="@+id/button2"
                 />
         <Spinner
-                android:background=""
                 android:id="@+id/placeSpinner"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">

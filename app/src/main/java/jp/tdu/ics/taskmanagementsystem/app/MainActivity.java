@@ -28,6 +28,10 @@ public class MainActivity extends Activity {
     Toast toast;
     SQLiteDatabase sqLiteDatabase;
     MySQLiteOpenHelper mySQLiteOpenHelper;
+    ArrayList<String> result;
+    Socket socket = null;
+
+
 
     IntentFilter intentFilter;
     WifiManager wifiManager;
@@ -40,6 +44,8 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        toast = Toast.makeText(getApplicationContext(), null, Toast.LENGTH_LONG);
 
         Button addButton = (Button)findViewById(R.id.addButton);
         addButton.setOnClickListener(new View.OnClickListener() {
@@ -159,61 +165,81 @@ public class MainActivity extends Activity {
 
 
     public void  postWiFiData(final Map<String, List<Integer>> wifiData){
-        new AsyncTask<Void, Void, String>() {
+        new AsyncTask<Void, Void, List<String>>() {
             @Override
-            protected String doInBackground(Void... params) {
-                Socket socket = null;
+            protected List<String> doInBackground(Void... params) {
                 String message = "";
                 try {
                     if(wifiManager.getConnectionInfo().getSSID().equals("\"TDN SERA\"")) {
                         socket = new Socket(icsPrivateIpAddress, PORT);
                     }else{
                         socket = new Socket(icsGlobalIpAddrss, PORT);
-
                     }
                     ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
                     objectOutputStream.writeObject(wifiData);
 
-
+                    /*
                     InputStreamReader inputStreamReader = new InputStreamReader(socket.getInputStream());
                     BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
                     String receivedMessage;
                     while ((receivedMessage = bufferedReader.readLine()) != null) {
                         message += receivedMessage;
                     }
-                    socket.close();
+                    */
+
+                    ObjectInputStream objectInputStream = new ObjectInputStream(socket.getInputStream());
+                    result = (ArrayList<String>) objectInputStream.readObject();
+                    if(socket != null) {
+                        socket.close();
+                    }
+                    objectInputStream.close();
                 } catch (IOException e) {
                     e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
                 }
-                return message;
+                return result;
             }
 
             @Override
-            protected void onPostExecute(String message){
+            protected void onPostExecute(List<String> result){
                 mySQLiteOpenHelper = new MySQLiteOpenHelper(getApplicationContext());
                 sqLiteDatabase = mySQLiteOpenHelper.getReadableDatabase();
                 Cursor cursor = sqLiteDatabase.query("taskTable", new String[]{"task", "placeID"}, null, null, null, null, null);
                 boolean next = cursor.moveToFirst();
                 StringBuilder toastMessage = new StringBuilder();
-                while(next){
-                    if(message.equals(cursor.getString(1))){
-                        toastMessage.append( message + "付近にいます。" + "\n" + "タスク名: "+ "{" +  cursor.getString(0) + "}" + "が解決できます。" + "\n");
+                if(result != null) {
+                    while (next) {
+                        if (result.get(0).equals(cursor.getString(1))) {
+                            toastMessage.append(result.get(0) + "付近にいます。" + "\n" + "タスク名: " + "{" + cursor.getString(0) + "}" + "が解決できます。" + "\n");
+                        }
+                        next = cursor.moveToNext();
                     }
-                    next = cursor.moveToNext();
+                    toastMessage.append(result);
+                }else{
+                    toastMessage.append("推定できませんでした");
                 }
+
+                /*
                 if(toast != null) {
                     toast.cancel();
                 }
-                toast = Toast.makeText(getApplicationContext(), null, Toast.LENGTH_LONG);
+                */
+                /*
                 if (toastMessage.length() != 0) {
                     toast.setText(toastMessage);
-                } else if(message.equals("推定できませんでした")){
-                    toast.setText(message);
-                }else if(message.length() != 0){
-                    toast.setText(message + "付近にいます。");
+                    toast.setText(result.toString());
+                } else if(result.get(0).equals("推定できませんでした")){
+                    toast.setText(result.get(0));
+                    toast.setText(result.toString());
+                }else if((result.get(0)).toString().length() != 0){
+                    toast.setText(result.get(0) + "付近にいます。");
+                    toast.setText(result.toString());
                 }
-                toast.show();
+                */
 
+                toast.setText(toastMessage);
+                toast.show();
                 cursor.close();
                 wifiManager.startScan();
             }
@@ -237,6 +263,7 @@ public class MainActivity extends Activity {
                 }
             }
             postWiFiData(wifidata);
+            toast.cancel();
         }
     }
 
@@ -247,11 +274,9 @@ public class MainActivity extends Activity {
         wifiReceiver = new WiFiReceiver();
         registerReceiver(wifiReceiver, intentFilter);
     }
-
     @Override
     public void onPause(){
         super.onPause();
-        WiFiReceiver wiFiReceiver = new WiFiReceiver();
-        unregisterReceiver(wiFiReceiver);
+        unregisterReceiver(wifiReceiver);
     }
 }
